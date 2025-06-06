@@ -11,6 +11,11 @@ func AddGuest(c *gin.Context) {
 	if err := c.BindJSON(&newGuest); err != nil{
 		return
 	}
+	exist := db.DB.Where("phone = ?", newGuest.Phone).First(&Guest{}).Error
+	if exist == nil {
+		c.JSON(400, gin.H{"message": "Guest with this phone number already exists"})
+		return
+	}
 
 	result := db.DB.Create(&newGuest)
 	if result.Error != nil {
