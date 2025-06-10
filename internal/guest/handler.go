@@ -1,9 +1,13 @@
 package guest
 
 import (
+	"fmt"
 	"gorm/db"
+	"gorm/models/entity/guest"
+	"gorm/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 func AddGuest(c *gin.Context) {
@@ -86,4 +90,48 @@ func DeleteGuest(c *gin.Context){
 		return
 	}
 	c.JSON(200, gin.H{"message": "Guest deleted successfully"})
+}
+
+func UploadExcel(c *gin.Context){
+	file, err := c.FormFile("file")
+
+	if err !=nil {
+		c.JSON(400, gin.H{"error": "File is required"})
+		return
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to open file"})
+		return
+	}
+
+	defer src.Close()
+
+	xlFile, err := excelize.OpenReader(src)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to read Excel file"})
+		return
+	}
+
+	rows, err := xlFile.GetRows("Sheet1")
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to get rows from Excel file"})
+		return
+	}
+
+	// var guests []guest.Guest
+
+	for i, row := range rows {
+		if i == 0 {
+			continue
+		}
+		fmt.Println(row)
+	}
+	// if err := services.AddGuestsFromExcel(rows); err != nil {
+	// 	c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to add guests from Excel: %s", err.Error())})
+	// 	return
+	// }
+	c.JSON(200, gin.H{"message": "Guests uploaded successfully"})
+
 }
